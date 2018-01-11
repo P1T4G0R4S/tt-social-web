@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="css\bootstrap.min.css">
+    <link rel="stylesheet" href="jquery\jquery-ui.css">
+    <link rel="stylesheet" href="css\theme.css">
+    <script src="jquery\external\jquery\jquery.js"></script>
+    <script src="jquery\jquery-ui.js"></script>
+    <script src="js\bootstrap.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.2.0/firebase.js"></script>
+    <title>Finder</title>
+</head>
+<body>
+    <div class="jumbotron text-center">
+        <img id="logo" src="img\app_icon.png">
+        <h1>Finder</h1>
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-8">
+                <h2>Acerca del Proyecto</h2>
+                <h4><strong>Justificación</strong></h4> 
+                <p>Dada la situación geológica de México y las experiencias vividas por la población a lo largo de la historia, se tiene la necesidad de desarrollar un sistema que ayude a coordinar los esfuerzos de búsqueda y rescate para localizar personas extraviadas después de que ocurra un sismo.</p>
+            </div>
+            <div class="col-sm-4">
+                <span class="glyphicon glyphicon-map-marker logo"></span>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid bg-grey">
+        <div class="row">
+            <div class="col-sm-4">
+                <span class="glyphicon glyphicon-globe logo"></span>
+            </div>
+            <div class="col-sm-8">
+                <h2>Incidentes</h2>
+                <h4><strong>Búsqueda</strong></h4> 
+                <p><strong>Finder</strong> permite a sus usuarios consultar información de incidentes en tiempo real y visualizarlos con el apoyo de Google Maps
+                    .</p>
+            </div>
+        </div>
+        <div class="row" id="row-map">
+            <div class="col-sm-12" id="map"></div>      
+        </div>
+    </div>
+    
+    <div class="container-fluid text-center">
+        <h2>Reportes</h2>
+        <h4><strong>Finder</strong> también permite a los usuarios reportar su estado y consultar el estado de otras personas. Así como reportar incidentes junto con información importante de lo acontecido.</h4>
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="panel panel-default">
+                    <form>
+                        <div class="panel-heading">
+                            <h1>Reportar Incidente</h1>
+                        </div>
+                        <div class="panel-body">
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <span class="input-group-addon"><i class="glyphicon glyphicon-info-sign"></i></span>
+                                    <input type="text" class="form-control" placeholder="Descripción" required>    
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">                                    
+                                <div class="input-group">
+                                    <label class="input-group-btn"><span class="btn">Buscar<input type="file" style=display:none;></span></label>
+                                    <input type="text" class="form-control" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-footer">
+                            <button class="btn btn-lg" type="submit">Enviar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="panel panel-default">
+                    <form>
+                        <div class="panel-heading">
+                            <h1>Reportar Estado</h1>
+                        </div>
+                        <div class="panel-body">
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <span class="input-group-addon">
+                                        <input type="checkbox" aria-label="...">
+                                    </span>
+                                    <input type="text" class="form-control" placeholder="Descripción">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-footer">
+                            <button class="btn btn-lg" type="submit">Enviar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+  <script>
+    
+
+
+  </script>
+    <script>
+        $(function() {
+            // We can watch for our custom `fileselect` event like this
+            $(document).ready( function() {
+                // Load markers 
+                $.ajax({
+                        url: "http://floating-sands-67659.herokuapp.com/api/reporte_incidentes", 
+                        success: function(response){
+                            console.log(response)
+                            // Initialize Firebase
+                            var config = {
+                            apiKey: "AIzaSyBI5S7_6CzhO1anceINm74ufYkvscA18no",
+                            authDomain: "ttapp-1509071108764.firebaseapp.com",
+                            databaseURL: "https://ttapp-1509071108764.firebaseio.com",
+                            projectId: "ttapp-1509071108764",
+                            storageBucket: "ttapp-1509071108764.appspot.com",
+                            messagingSenderId: "569049920131"
+                            };
+                            firebase.initializeApp(config);
+
+                            
+                            var map = new google.maps.Map(document.getElementById('map'), {
+                                        zoom: 10,
+                                        center: {lat:19.3966062,lng:-99.141895}
+                                    });
+                            var infowindow = new google.maps.InfoWindow();
+                            $.map(response, function(incident, i) {
+                                var marker = new google.maps.Marker({
+                                    position: incident.ubicacion,
+                                    map: map,
+                                    title: incident.descripcion
+                                });
+                                var storage = firebase.storage();
+                                storage.ref('ri_' + incident.id).getDownloadURL().then(function(url) {
+                                incident.imgUrl = url;
+                                }).catch(function(error) {
+                                // Handle any errors
+                                });
+                                google.maps.event.addListener(marker, 'click', (function(marker, i) {
+                                    return function() {
+                                        infowindow.setContent('<h3><b>' + incident.fecha + ' ' + incident.hora + '</b></h3>' +
+                                                              '<br>' + incident.descripcion + "<br>" +
+                                                              '<img src='+ incident.imgUrl +' height="100px" width="100px"></img>'
+                                        );
+                                        infowindow.setOptions({maxWidth:350});                                       
+                                        infowindow.open(map, marker);
+                                    }
+                                })(marker, i));
+                            });
+                            
+                        }
+                });
+            });
+            
+        });
+        
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCd58ylVQmPPaB7I4T73-1OmLX2ILCDziE"
+    async defer></script>
+</body>
+</html>
