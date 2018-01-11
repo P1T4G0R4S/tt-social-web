@@ -94,7 +94,8 @@
                             
                         </div>
                         <div class="panel-footer">
-                            <button class="btn btn-lg" type="submit">Enviar</button>
+                                <input id="clickMe" class="btn btn-primary btn-block" type="button" value="Log In" onclick="checkLogin();" />
+        
                         </div>
                     </form>
                 </div>
@@ -109,17 +110,20 @@
               <h3 class="modal-title" style="text-align:center;"><img id="logo" src="img\app_icon.png"></h3>
             </div>
             <!-- body -->
-            <div class="modal-header">
+            <div class="modal-body">
               <form id="frmLogin" role="form" onsubmit="checkLogin()">
                 <div class="form-group">
                   <p><input type="email" id="emailLogin" class="form-control" placeholder="Email"/></p>
                   <p><input type="password" id="passLogin" class="form-control" placeholder="Password" /></p>
                 </div>
+                <div class="alert alert-danger" id="errorLogin" style="display:none;">
+                    <strong>¡Error!</strong> Usuario y/o contraseña incorrectos.
+                </div>
               </form>
             </div>
             <!-- footer -->
             <div class="modal-footer">
-                    <input id="clickMe" class="btn btn-primary btn-block" type="button" value="Log In" onclick="checkLogin();" />
+                <input id="clickMe" class="btn btn-primary btn-block" type="button" value="Log In" onclick="checkLogin();" />
             </div>
             
           </div>
@@ -128,14 +132,16 @@
 
     <script>
         function checkLogin(){
-            console.log("http://floating-sands-67659.herokuapp.com/api/usuarios?filter={'where':{'nombre':'" +
-                        $('#emailLogin').val() + "', 'contrasena':'" + $('#passLogin').val() + "'}}")
             $.ajax({
-                        url: 'http://floating-sands-67659.herokuapp.com/api/usuarios?filter={"where":{"nombre":"' +
+                        url: 'http://floating-sands-67659.herokuapp.com/api/usuarios?filter={"where":{"correo_electronico":"' +
                         $('#emailLogin').val() + '", "contrasena":"' + $('#passLogin').val() + '"}}', 
                         success: function(response){
-                            if(response.length){
+                            console.log(response)
+                            if(response.length>0){
                                 $('#popUpWindow').modal('hide');    
+                            }
+                            else{
+                                $('#errorLogin').show();
                             }
                         }
                 });
