@@ -55,47 +55,24 @@
                 <div class="panel panel-default">
                     <form>
                         <div class="panel-heading">
-                            <h1>Buscar Incidente</h1>
-                        </div>
-                        <div class="panel-body">
-                            <div class="form-group">
-                                <div class="input-group">
-                                    <span class="input-group-addon"><i class="glyphicon glyphicon-search"></i></span>
-                                    <input type="text" class="form-control" placeholder="Descripción" required>    
-                                </div>
-                            </div>
-                            
-                            <div class="row litrow-map" id="row-map">
-                                <div class="col-sm-12 litmap" id="mapIncidente"></div>      
-                            </div>
-                        </div>
-                        <div class="panel-footer">
-                            <button class="btn btn-lg" type="submit">Enviar</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <div class="col-sm-6">
-                <div class="panel panel-default">
-                    <form>
-                        <div class="panel-heading">
                             <h1>Buscar Persona</h1>
                         </div>
                         <div class="panel-body">
                             <div class="form-group">
                                 <div class="input-group">
                                     <span class="input-group-addon"><i class="glyphicon glyphicon-search"></i></span>
-                                    <input type="text" class="form-control" placeholder="Descripción" required>    
+                                    <input id="persona" type="text" class="form-control" placeholder="Descripción" required>    
                                 </div>
                             </div>
                             <div class="row litrow-map" id="row-map">
                                 <div class="col-sm-12 litmap" id="mapPersona"></div>      
                             </div>
-                            
+                            <div class="alert alert-danger" id="noDataPersona" style="display:none;">
+                                <strong>¡Error!</strong> No se encontraron coincidencias.
+                            </div>
                         </div>
                         <div class="panel-footer">
-                                <input id="clickMe" class="btn btn-primary btn-block" type="button" value="Log In" onclick="checkLogin();" />
-        
+                            <input class="btn btn-primary btn-block" type="button" value="Enviar" onclick="searchPersona();" />
                         </div>
                     </form>
                 </div>
@@ -123,7 +100,7 @@
             </div>
             <!-- footer -->
             <div class="modal-footer">
-                <input id="clickMe" class="btn btn-primary btn-block" type="button" value="Log In" onclick="checkLogin();" />
+                <input class="btn btn-primary btn-block" type="button" value="Log In" onclick="checkLogin();" />
             </div>
             
           </div>
@@ -146,13 +123,55 @@
                         }
                 });
         }
+        function searchPersona(){
+            $.ajax({
+                url: 'http://floating-sands-67659.herokuapp.com/api/usuarios?filter={"where":{"nombre":{"like":"%25' + $('#persona').val() +'%25"}}}', 
+                success: function(response){
+                    console.log(response)
+                    if(response.length>0){
+                        $.map(response, function(usuarios, i) {
+                            var mapPersona = new google.maps.Map(document.getElementById('mapPersona'), {
+                                zoom: 10,
+                                center: {lat:19.3966062,lng:-99.141895}
+                            });
+                            $.ajax({
+                                url: 'http://floating-sands-67659.herokuapp.com/api/historial_estado_usuarios?filter={"where":{"id":"' +
+                                usuarios.id + '"}}', 
+                                success: function(response2){
+                                    console.log(response2)
+                                    var infowindow = new google.maps.InfoWindow();
+                                    $.map(response2, function(personaIds, i) {
+                                        var marker = new google.maps.Marker({
+                                            position: personaIds.ubicacion,
+                                            map: mapPersona,
+                                            title: usuarios.nombre
+                                        });
+                                    
+                                        google.maps.event.addListener(marker, 'click', (function(marker, i) {
+                                            return function() {
+                                                infowindow.setContent('<h3><b>' + usuarios.nombre  + '</b></h3>');
+                                                infowindow.setOptions({maxWidth:350});                                       
+                                                infowindow.open(map, marker);
+                                            }
+                                        })(marker, i));
+                                });
+                                }
+                            });
+                        }); 
+                    }
+                    else{
+                        $('#noDataIncidente').show();
+                    }
+                }
+            });
+        }
+        
         $(window).on('load',function(){
                 $('#popUpWindow').modal({backdrop: 'static', keyboard: false});
                 $('#popUpWindow').modal('show');
             });
         // We can watch for our custom `fileselect` event like this
         $(document).ready( function() {
-                
                 // Load markers 
                 $.ajax({
                         url: "http://floating-sands-67659.herokuapp.com/api/reporte_incidentes", 
@@ -174,11 +193,6 @@
                                         zoom: 10,
                                         center: {lat:19.3966062,lng:-99.141895}
                                     });
-                            var mapIncidente = new google.maps.Map(document.getElementById('mapIncidente'), {
-                                zoom: 10,
-                                center: {lat:19.3966062,lng:-99.141895}
-                            });
-
                             var mapPersona = new google.maps.Map(document.getElementById('mapPersona'), {
                                 zoom: 10,
                                 center: {lat:19.3966062,lng:-99.141895}
